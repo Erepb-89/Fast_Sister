@@ -3,7 +3,7 @@ import copy
 import csv
 import os
 
-csv_keys = ["tag", "engSH", "engSL", 
+csv_keys = ["tag", "SH", "SL", 
             "HH", "HI", "LO", "LL", 
             "enHH", "enHI", "enLO", "enLL",
             "Module", "Channel", 
@@ -15,6 +15,7 @@ def csv_dict_reader(file_obj):
     """
     reader = csv.DictReader(file_obj, delimiter=';')
     reader_list = []
+
     for line in reader:
         if line[csv_keys[14]] == block_type and line[csv_keys[13]] == controller:
         #print(line[csv_keys[14]])
@@ -29,7 +30,8 @@ def csv_dict_reader(file_obj):
                 csv_keys[7]: line[csv_keys[7]],
                 csv_keys[8]: line[csv_keys[8]],
                 csv_keys[9]: line[csv_keys[9]],
-                csv_keys[10]: line[csv_keys[10]]})                       
+                csv_keys[10]: line[csv_keys[10]]})     
+
     return reader_list
 
 """
@@ -39,19 +41,22 @@ def csv_dict_reader(file_obj):
 gvl_X файл, подкладывать в корневую папку и переименовывать в safety_gvl.
 """
 
-point_type = 'AI'
+point_type = 'DO'
 
 csv_file = 'All_points.csv'                 # Файл с тегами каналов, шкалами и уставками
 # tags_file = 'AI_txt.txt'                  # Текстовый файл с тегами каналов
 primary_file_name = f'{point_type}_01.xml'  # Исходный xml файл с шаблоном
 replaced_tag = f'{point_type}1'             # Заменяемый тег из шаблона
 primary_gvl_file_name = 'safety_gvl.xml'    # Исходный safety_gvl файл
+
 if not os.path.exists(f'{point_type}'):     # Создаем папку, если не существует
     os.mkdir(f'{point_type}')
+
 block_type = f'E-{point_type} (RED)'        # Тип блока
-controller = 'NDMG_PAZ1'                    # Контроллер
+controller = 'USTSS_PAZ'                    # Контроллер
 new_file_path = f'{point_type}/{controller}_{point_type}.xml'      # Новый xml файл для загрузки в конфигурацию
 new_gvl_file_path = f'{point_type}/{controller}_gvl.xml'   # Новый файл safety_gvl для загрузки в конфигурацию
+synchron = 'PAZ004SHU01_S_alarm'
 
 
 with open(csv_file) as f_obj:
@@ -77,7 +82,7 @@ print(root[0][0][1][0][1].attrib)           # MetaObject
 print(root[0][0][1][0][1][2].text)          # Имя группы
 print(root[0][0][1][0][2].attrib)           # Object
 #print(root[0][0][1][0][2][0][0].attrib)     # SafetyVariables for AI only
-print(root[0][0][1][0][2][0][0][11][0].text)     # InitAlarm
+# print(root[0][0][1][0][2][0][0][11][0].text)     # InitAlarm
 print(root[0][0][1][0][2][1].attrib)        # NetworkArray
 print(root[0][0][1][0][2][1][0].attrib)     # Блок с привязками 67368ee6...
 print(root[0][0][1][0][2][1][0][0].text)    # Имя Network
@@ -123,9 +128,10 @@ root[0][0][1][0][1][2].text = f'{controller}_{point_type}'
 print(root[0][0][1][0][1][2].text)
 
 safety_var_list = [root[0][0][1][0][2][0][0][el][0].text for el in range(len(root[0][0][1][0][2][0][0]))]
-#print(safety_var_list)
+print('safety_var_list', safety_var_list)
 
 for i in range(number):
+
     new_block = copy.deepcopy(root[0][0][1][0][2][1][0])        # Создаем копию root[0][0][1][0][2][1][0]
     old_network_text = root[0][0][1][0][2][1][0][0].text        # Сохраняем старый текст в переменную
     chngd = tags_list[i]                                        # Берем из списка тегов следующий по порядку
@@ -140,9 +146,16 @@ for i in range(number):
     for i2 in range(block_input_len):
         try:
             old_block_input = root[0][0][1][0][2][1][0][2][0][0][i2][2][0].text
-            new_block[2][0][0][i2][2][0].text = old_block_input.replace(replaced_tag, chngd)  # Inputs < Input
+
+            if old_block_input == 'TEST_SHU':
+                new_block[2][0][0][i2][2][0].text = synchron
+
+            else:
+                new_block[2][0][0][i2][2][0].text = old_block_input.replace(replaced_tag, chngd)  # Inputs < Input
+
             counter += 1
             new_block[2][0][0][i2][2][2].text = f'{counter}'
+
         except:
             pass
             #print('Данный элемент не имеет вложенностей и будет пропущен') 
@@ -154,6 +167,7 @@ for i in range(number):
             new_block[2][0][1][i3][2][0].text = old_block_output.replace(replaced_tag, chngd) # Outputs < Input
             counter += 1
             new_block[2][0][1][i3][2][2].text = f'{counter}'
+
         except:
             pass
             #print(f'Данный элемент не имеет вложенностей и будет пропущен')
@@ -170,22 +184,31 @@ for i in range(number):
     new_block[2][1][0][2].text = f'{counter}'
 
     root[0][0][1][0][2][1].append(new_block)            # добавляем новые блоки к NetworkArray
+
+
     for safety_var in range(safety_len):            
         old_text = root[0][0][1][0][2][0][0][safety_var][0].text
+        #print('old_text', old_text)
+
         if old_text == 'InitAlarm':
             pass
+
         else:
             new_safety = copy.deepcopy(root[0][0][1][0][2][0][0][safety_var])
+            #print('new_safety', new_safety.attrib)
             new_safety[0].text = old_text.replace(replaced_tag, chngd)
             #print(new_safety[0].text.split('_'))
             safety_key = new_safety[0].text.split('_')
-            #print(safety_key)
-            if safety_key[1] in csv_keys:
-                #print(safety_key[1])
-                new_safety[3].text = csv_list[i][safety_key[1]]
-                #print(new_safety[3].text)
+            #print('safety_key', safety_key)
+
+            if safety_key[-1] in csv_keys:
+                #print(safety_key[-1])
+                new_safety[3].text = csv_list[i][safety_key[-1]]
+                #print('new_safety[3].text', new_safety[3].text)
+
             if new_safety[0].text in safety_var_list:
                 pass            # Пропускаем повторяющиеся переменные
+
             else:    
                 root[0][0][1][0][2][0][0].append(new_safety)    # добавляем новые переменные к SafetyVariables
 
@@ -200,8 +223,10 @@ try:
     print('<<<----Поля, добавленные в новый файл gvl---->>>')
 
     for elem in range(len(root[0][0][1][0][2][0][0])):
+
         if root[0][0][1][0][2][0][0][elem][0].text in glv_names_list:
             pass
+
         else:
             if root[0][0][1][0][2][0][0][elem][2].text == 'VAR_EXTERNAL':
                 new_safety_gvl = copy.deepcopy(root[0][0][1][0][2][0][0][elem])
@@ -218,5 +243,6 @@ with open(new_file_path, 'wb') as file:            # Сохраняем полу
 try:
     with open(new_gvl_file_path, 'wb') as file:            # Сохраняем получившееся дерево в новый файл
         tree_gvl.write(file)
+
 except:
     pass
