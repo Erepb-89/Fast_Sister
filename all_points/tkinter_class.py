@@ -28,6 +28,11 @@ class ProsoftApp(tk.Tk):
 
         self.btn_open = Button(self, text="Открыть файл", command=self.open_file)
 
+        self.lbl = Label(self, text='Выбранный контроллер', font=("Arial Bold", 10))
+        self.btn_run = tk.Button(self, text="Старт", command=self.on_button)
+
+        self.combo_ctrlr = Combobox(self)
+
         self.lbl2.pack()
         self.combo_point.pack()
         self.btn_open.pack()
@@ -39,15 +44,12 @@ class ProsoftApp(tk.Tk):
         with open('All_points.csv') as f_obj:
             self.ctrlr_list = self.csv_controller_list(f_obj)
 
-        self.lbl = Label(self, text='Выбранный контроллер', font=("Arial Bold", 10))
         self.lbl.pack()
 
-        self.combo_ctrlr = Combobox(self)
         self.combo_ctrlr['values'] = self.controller_list
         self.combo_ctrlr.current(0)  # установите вариант по умолчанию 
         self.combo_ctrlr.pack()
 
-        self.btn_run = tk.Button(self, text="Старт", command=self.on_button)
         self.btn_run.pack()
 
         return self.file
@@ -236,12 +238,14 @@ class ProsoftApp(tk.Tk):
 
         with open(new_file_path, 'wb') as file:            # Сохраняем получившееся дерево в новый файл
             tree.write(file)
+            print(f'Файл {new_file_path} создан')
             self.lb2 = Label(self, text=f'Файл {new_file_path} создан', font=("Arial Bold", 10))
             self.lb2.pack()
 
         try:
             with open(new_gvl_file_path, 'wb') as file:            # Сохраняем получившееся дерево в новый файл
                 tree_gvl.write(file)
+                print(f'Файл {new_gvl_file_path} создан')
                 self.lb3 = Label(self, text=f'Файл {new_gvl_file_path} создан', font=("Arial Bold", 10))
                 self.lb3.pack()
 
