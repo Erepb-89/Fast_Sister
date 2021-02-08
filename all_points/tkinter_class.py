@@ -19,7 +19,7 @@ class ProsoftApp(tk.Tk):
     def __init__(self):
         tk.Tk.__init__(self)
         self.title("Прокачка сигналов Prosoft (ПАЗ)")
-        self.geometry('355x150')
+        self.geometry('355x200')
 
         self.lbl2 = Label(self, text='Заменяемая переменная', font=("Arial Bold", 10))
         self.combo_point = Combobox(self)
@@ -86,7 +86,6 @@ class ProsoftApp(tk.Tk):
 
 
     def on_button(self):
-        #print(self.entry.get())
         print(self.combo_ctrlr.get())
 
         point_type = self.combo_point.get()
@@ -195,7 +194,6 @@ class ProsoftApp(tk.Tk):
 
             for safety_var in range(safety_len):            
                 old_text = root[0][0][1][0][2][0][0][safety_var][0].text
-                #print('old_text', old_text)
 
                 if old_text == 'InitAlarm':
                     pass
@@ -238,10 +236,14 @@ class ProsoftApp(tk.Tk):
 
         with open(new_file_path, 'wb') as file:            # Сохраняем получившееся дерево в новый файл
             tree.write(file)
+            self.lb2 = Label(self, text=f'Файл {new_file_path} создан', font=("Arial Bold", 10))
+            self.lb2.pack()
 
         try:
             with open(new_gvl_file_path, 'wb') as file:            # Сохраняем получившееся дерево в новый файл
                 tree_gvl.write(file)
+                self.lb3 = Label(self, text=f'Файл {new_gvl_file_path} создан', font=("Arial Bold", 10))
+                self.lb3.pack()
 
         except:
             pass
